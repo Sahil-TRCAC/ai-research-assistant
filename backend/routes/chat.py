@@ -139,30 +139,29 @@ def chat():
         question[:80], top_k, document_id,
     )
 
-    # ── Step 1: Retrieval ─────────────────────────────────────────────────────
-    try:
-        retrieval_result = retrieval_service.search(
-            query=question,
-            top_k=top_k,
-            document_id=document_id,
-        )
-    except ValueError as exc:
-        return error_response(str(exc), 400, "INVALID_QUESTION")
-    except RuntimeError as exc:
-        # Embedding model failed to load
-        return error_response(str(exc), 503, "RETRIEVAL_FAILED")
-    except Exception as exc:
-        logger.exception("Retrieval failed unexpectedly")
-        return error_response("Retrieval failed.", 500, "CHAT_FAILED", str(exc))
+    # ── Step 1: Retrieval (skip if no embedded chunks) ──────────────────────────
+    from models.document_chunk import DocumentChunk
 
-    chunks = retrieval_result.results
+    has_docs = DocumentChunk.query.filter_by(is_embedded=True).first() is not None
+    chunks = []
 
-    # Don't block — LLM will answer from general knowledge if no chunks found
-    logger.info(
-        "Retrieved %d chunks (top score=%.4f)",
-        len(chunks),
-        chunks[0].similarity_score if chunks else 0.0,
-    )
+    if has_docs:
+        try:
+            retrieval_result = retrieval_service.search(
+                query=question,
+                top_k=top_k,
+                document_id=document_id,
+            )
+            chunks = retrieval_result.results
+        except ValueError as exc:
+            return error_response(str(exc), 400, "INVALID_QUESTION")
+        except RuntimeError as exc:
+            return error_response(str(exc), 503, "RETRIEVAL_FAILED")
+        except Exception as exc:
+            logger.exception("Retrieval failed unexpectedly")
+            return error_response("Retrieval failed.", 500, "CHAT_FAILED", str(exc))
+
+    logger.info("Retrieved %d chunks (has_docs=%s)", len(chunks), has_docs)
 
     # ── Step 2: LLM Generation ────────────────────────────────────────────────
     try:
