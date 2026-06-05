@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Research Studio | RAG Assistant</title>
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#89ceff",
+                        "primary-fixed-dim": "#adc6ff",
+                        "surface-dim": "#0b1326",
+                        "error": "#ffb4ab",
+                        "on-primary": "#002e6a",
+                        "inverse-on-surface": "#283044",
+                        "on-tertiary-fixed-variant": "#004c6e",
+                        "surface-bright": "#31394d",
+                        "tertiary": "#89ceff",
+                        "on-surface": "#dae2fd",
+                        "error-container": "#93000a",
+                        "surface-container-lowest": "#060e20",
+                        "inverse-surface": "#dae2fd",
+                        "surface-tint": "#adc6ff",
+                        "on-tertiary-container": "#002d43",
+                        "on-tertiary-fixed": "#001e2f",
+                        "tertiary-container": "#009ada",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "tertiary-fixed": "#c9e6ff",
+                        "on-primary-container": "#00285d",
+                        "primary-container": "#4d8eff",
+                        "on-error-container": "#ffdad6",
+                        "background": "#0b1326",
+                        "secondary-container": "#3a4a5f",
+                        "on-error": "#690005",
+                        "outline": "#8c909f",
+                        "surface-container": "#171f33",
+                        "surface-variant": "#2d3449",
+                        "primary": "#adc6ff",
+                        "on-surface-variant": "#c2c6d6",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "surface-container-high": "#222a3d",
+                        "secondary": "#b7c8e1",
+                        "surface-container-highest": "#2d3449",
+                        "surface-container-low": "#131b2e",
+                        "on-tertiary": "#00344d",
+                        "on-background": "#dae2fd",
+                        "on-primary-fixed": "#001a42",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-secondary-container": "#a9bad3",
+                        "on-secondary": "#213145",
+                        "primary-fixed": "#d8e2ff",
+                        "on-secondary-fixed": "#0b1c30",
+                        "outline-variant": "#424754",
+                        "inverse-primary": "#005ac2",
+                        "surface": "#0b1326"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "xl": "2rem",
+                        "lg": "1.5rem",
+                        "max-content-width": "1280px",
+                        "sm": "0.5rem",
+                        "margin-desktop": "2.5rem",
+                        "md": "1rem",
+                        "margin-mobile": "1rem",
+                        "xs": "0.25rem",
+                        "gutter": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "code-snippet": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-md": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "code-snippet": ["14px", {"lineHeight": "22px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            overflow-x: hidden;
+            min-height: max(884px, 100dvh);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #131b2e;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+        .glass-header {
+            background: rgba(11, 19, 38, 0.85);
+            backdrop-filter: blur(12px);
+        }
+        .sidebar-transition {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .research-card-border {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .source-chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+        .source-chip:hover {
+            background: rgba(173, 198, 255, 0.1);
+            border-color: #adc6ff;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Sidebar / Navigation Drawer -->
+<aside class="h-screen w-72 fixed left-0 top-0 z-50 bg-surface-container-low border-r border-outline-variant sidebar-transition -translate-x-full lg:translate-x-0 flex flex-col p-md shadow-2xl lg:shadow-none" id="sidebar">
+<div class="flex items-center justify-between mb-lg px-xs">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-headline-md" data-icon="hub">hub</span>
+<span class="font-headline-md text-xl font-bold text-primary">Synthesis Lab</span>
+</div>
+<button class="lg:hidden p-sm hover:bg-surface-variant rounded-lg" onclick="toggleSidebar()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- NotebookLM Style Documents Section -->
+<div class="mb-xl">
+<div class="flex items-center justify-between px-xs mb-sm">
+<h3 class="text-xs font-label-md text-on-surface uppercase tracking-widest">Sources</h3>
+<span class="px-2 py-0.5 bg-surface-container-highest text-[10px] rounded-full text-primary font-bold">5 Docs</span>
+</div>
+<button class="w-full flex items-center justify-center gap-sm bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant/30 py-2.5 rounded-xl mb-md transition-all hover:bg-surface-variant">
+<span class="material-symbols-outlined text-sm">upload_file</span>
+<span class="text-sm font-semibold">Upload PDF</span>
+</button>
+<div class="space-y-1 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+<div class="flex items-center gap-sm p-2 bg-secondary-container/20 border border-secondary-container/40 rounded-lg group cursor-pointer">
+<span class="material-symbols-outlined text-sm text-primary">description</span>
+<span class="text-xs truncate font-medium flex-grow">Genomics_Report.pdf</span>
+<span class="material-symbols-outlined text-[10px] text-outline opacity-0 group-hover:opacity-100 transition-opacity">open_in_new</span>
+</div>
+<div class="flex items-center gap-sm p-2 hover:bg-surface-variant rounded-lg group cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">description</span>
+<span class="text-xs truncate text-on-surface-variant group-hover:text-on-surface flex-grow">Climate_Trends_2023.docx</span>
+<span class="material-symbols-outlined text-[10px] text-outline opacity-0 group-hover:opacity-100 transition-opacity">open_in_new</span>
+</div>
+<div class="flex items-center gap-sm p-2 hover:bg-surface-variant rounded-lg group cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">description</span>
+<span class="text-xs truncate text-on-surface-variant group-hover:text-on-surface flex-grow">Neural_Pathways_v2.txt</span>
+<span class="material-symbols-outlined text-[10px] text-outline opacity-0 group-hover:opacity-100 transition-opacity">open_in_new</span>
+</div>
+</div>
+</div>
+<!-- Recent Searches -->
+<div class="flex-grow overflow-y-auto custom-scrollbar">
+<p class="text-xs font-label-md text-on-surface-variant uppercase tracking-widest mb-md px-xs">Recent Queries</p>
+<nav class="space-y-1">
+<a class="flex items-center gap-md px-md py-2.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+<span class="truncate text-sm">Arctic mutation rates...</span>
+</a>
+<a class="flex items-center gap-md px-md py-2.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+<span class="truncate text-sm">Carbon sequestration AI...</span>
+</a>
+<a class="flex items-center gap-md px-md py-2.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+<span class="truncate text-sm">Bio-engineering ethics...</span>
+</a>
+</nav>
+</div>
+<!-- User Profile -->
+<div class="pt-md mt-auto border-t border-outline-variant">
+<div class="flex items-center gap-md p-md hover:bg-surface-variant rounded-xl transition-colors cursor-pointer">
+<img alt="Dr. Aris Thorne" class="w-8 h-8 rounded-full object-cover border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDe2lqyL5zVl-TXI_tAjEnUaLTexN5R4EMmMlO36DCFJc_Sk40jPRA0VPKPnyhDv4a2Nfvq4vpzLZkzjuPCziTniyx39lm4WiIBxS3TI8D8exhnUm-GWU97BOa-OGgoQjb4SroGbxPXvUIhRN14Ep6IRerx1CRNz4xvsgUhaj-0nhk6EvDkuH8MRe42BB7znqaNxZxB3ww-z-AzP7Vg6vqM9q_UH_LzfzdEYDi9gr9Kfz5DBuwiLBYEyQlzWq8g4PZuWgTrotTpm2o"/>
+<div class="truncate">
+<p class="font-semibold text-sm text-on-surface">Dr. Aris Thorne</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Pro Plan • V3.4.2</p>
+</div>
+<span class="material-symbols-outlined text-sm ml-auto">settings</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-72 h-screen flex flex-col relative">
+<!-- Top App Bar -->
+<header class="glass-header sticky top-0 z-40 h-16 flex justify-between items-center px-margin-mobile lg:px-12 border-b border-outline-variant">
+<div class="flex items-center gap-md">
+<button class="lg:hidden p-sm hover:bg-surface-variant rounded-lg text-primary" onclick="toggleSidebar()">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="flex flex-col">
+<h1 class="text-sm font-semibold text-on-surface">Current Synthesis</h1>
+<p class="text-[10px] text-on-surface-variant uppercase font-label-md">Cross-Domain Environmental Research</p>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-full text-xs hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-sm">share</span>
+<span>Share Notebook</span>
+</button>
+<button class="p-sm hover:bg-surface-variant rounded-lg text-on-surface-variant">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</header>
+<!-- Chat Container - WIDENED for Perplexity style -->
+<section class="flex-grow overflow-y-auto custom-scrollbar pb-40" id="chat-canvas">
+<div class="max-w-4xl mx-auto px-6 py-12 space-y-12">
+<!-- Welcome Header -->
+<div class="flex flex-col items-center justify-center text-center py-8">
+<div class="w-14 h-14 bg-surface-container-highest rounded-2xl flex items-center justify-center mb-md border border-outline-variant rotate-3">
+<span class="material-symbols-outlined text-primary text-headline-md -rotate-3">auto_awesome</span>
+</div>
+<h2 class="font-headline-lg-mobile lg:font-headline-lg text-on-surface mb-sm">What do you want to know?</h2>
+<p class="text-on-surface-variant max-w-lg text-sm">Ask questions based on your 5 uploaded research documents.</p>
+</div>
+<!-- Chat Message: User -->
+<div class="flex flex-col items-end gap-sm animate-in slide-in-from-bottom duration-300">
+<div class="max-w-[85%] bg-surface-container-highest p-5 rounded-2xl research-card-border shadow-sm">
+<p class="text-on-surface text-lg">Summarize the correlation between genomic mutations and localized temperature anomalies as described in the 2023 climate report.</p>
+</div>
+<span class="text-[10px] uppercase font-label-md text-outline">Sent 10:42 AM</span>
+</div>
+<!-- Chat Message: AI (Perplexity Style) -->
+<div class="flex flex-col items-start gap-4 animate-in slide-in-from-bottom duration-500">
+<div class="w-full max-w-full">
+<!-- Heading & Icon -->
+<div class="flex items-center gap-2 mb-4">
+<div class="w-6 h-6 rounded-md bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+</div>
+<span class="font-label-md text-sm text-on-surface font-semibold">Answer</span>
+</div>
+<!-- AI Response Text with Citations -->
+<div class="text-on-surface leading-relaxed text-lg mb-8">
+                        According to <span class="text-primary font-semibold hover:underline cursor-pointer">Genomics_Report.pdf</span> [1] and <span class="text-primary font-semibold hover:underline cursor-pointer">Climate_Trends_2023.docx</span> [2], there is a statistically significant correlation (p &lt; 0.05) between multi-decadal temperature rises in Arctic regions and accelerated point mutations in the sequence regions coding for metabolic efficiency in endemic fauna. 
+                        <br/><br/>
+                        The <span class="italic">Climate Trends</span> report indicates a 14% increase in mutation density per 1.2°C of localized warming. This suggests that environmental stressors are directly influencing genomic stability as noted in <span class="text-primary font-semibold hover:underline cursor-pointer">Neural_Pathways_v2.txt</span> [3].
+                    </div>
+<!-- Sources Section (Perplexity Style Chips) -->
+<div class="space-y-4">
+<div class="flex items-center gap-2 text-xs font-label-md text-on-surface-variant uppercase tracking-widest">
+<span class="material-symbols-outlined text-sm">library_books</span>
+                            Sources
+                        </div>
+<div class="flex flex-wrap gap-2">
+<div class="source-chip flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer">
+<span class="flex items-center justify-center w-4 h-4 bg-primary text-on-primary text-[10px] font-bold rounded-sm">1</span>
+<span class="text-xs font-medium">Genomics_Report.pdf</span>
+</div>
+<div class="source-chip flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer">
+<span class="flex items-center justify-center w-4 h-4 bg-surface-container-highest text-primary text-[10px] font-bold rounded-sm border border-outline-variant">2</span>
+<span class="text-xs font-medium">Climate_Trends_2023.docx</span>
+</div>
+<div class="source-chip flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer">
+<span class="flex items-center justify-center w-4 h-4 bg-surface-container-highest text-primary text-[10px] font-bold rounded-sm border border-outline-variant">3</span>
+<span class="text-xs font-medium">Neural_Pathways_v2.txt</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 mt-2">
+<span class="text-[10px] uppercase font-label-md text-outline">Processed in 1.4s</span>
+<div class="flex gap-1">
+<button class="p-1 hover:bg-surface-variant rounded text-on-surface-variant"><span class="material-symbols-outlined text-sm">thumb_up</span></button>
+<button class="p-1 hover:bg-surface-variant rounded text-on-surface-variant"><span class="material-symbols-outlined text-sm">content_copy</span></button>
+<button class="p-1 hover:bg-surface-variant rounded text-on-surface-variant"><span class="material-symbols-outlined text-sm">refresh</span></button>
+</div>
+</div>
+</div>
+<!-- Thinking Indicator -->
+<div class="hidden flex items-center gap-sm text-on-surface-variant animate-pulse" id="thinking-bubble">
+<span class="material-symbols-outlined animate-spin text-sm">cycle</span>
+<span class="font-label-md text-xs">Synthesizing cross-domain datasets...</span>
+</div>
+</div>
+</section>
+<!-- Bottom Input Area (Perplexity/NotebookLM style) -->
+<footer class="absolute bottom-0 left-0 right-0 p-lg lg:p-xl bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none">
+<div class="max-w-4xl mx-auto pointer-events-auto">
+<div class="relative bg-surface-container border border-outline-variant rounded-2xl shadow-2xl transition-all focus-within:ring-1 focus-within:ring-primary/50">
+<div class="flex items-end gap-2 p-2">
+<button class="p-3 hover:bg-surface-variant rounded-xl text-on-surface-variant transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">attach_file</span>
+</button>
+<div class="flex-grow">
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-on-surface font-body-md py-3 px-2 resize-none custom-scrollbar max-h-48 min-h-[44px]" id="chat-input" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'" placeholder="Ask follow up..." rows="1"></textarea>
+</div>
+<button class="p-3 bg-primary text-on-primary rounded-xl hover:brightness-110 active:scale-95 transition-all shadow-lg flex items-center justify-center" onclick="handleSend()">
+<span class="material-symbols-outlined">arrow_upward</span>
+</button>
+</div>
+<!-- Quick Suggestion Pills -->
+<div class="flex gap-2 p-2 border-t border-outline-variant/20 overflow-x-auto no-scrollbar">
+<button class="whitespace-nowrap px-3 py-1 bg-surface-container-low border border-outline-variant/30 rounded-full text-[10px] text-on-surface-variant hover:border-primary transition-colors">Compare Arctic mutations</button>
+<button class="whitespace-nowrap px-3 py-1 bg-surface-container-low border border-outline-variant/30 rounded-full text-[10px] text-on-surface-variant hover:border-primary transition-colors">Summarize methodology</button>
+<button class="whitespace-nowrap px-3 py-1 bg-surface-container-low border border-outline-variant/30 rounded-full text-[10px] text-on-surface-variant hover:border-primary transition-colors">Check source validity</button>
+</div>
+</div>
+<div class="mt-4 flex justify-center gap-6">
+<div class="flex items-center gap-1.5">
+<kbd class="px-2 py-0.5 bg-surface-container-highest border border-outline-variant rounded text-[9px] text-on-surface-variant font-mono">Shift</kbd>
+<span class="text-[9px] text-outline uppercase font-label-md">+</span>
+<kbd class="px-2 py-0.5 bg-surface-container-highest border border-outline-variant rounded text-[9px] text-on-surface-variant font-mono">Enter</kbd>
+<span class="text-[9px] text-outline uppercase font-label-md ml-1">New Line</span>
+</div>
+<div class="flex items-center gap-1.5">
+<kbd class="px-2 py-0.5 bg-surface-container-highest border border-outline-variant rounded text-[9px] text-on-surface-variant font-mono">Enter</kbd>
+<span class="text-[9px] text-outline uppercase font-label-md ml-1">Send</span>
+</div>
+</div>
+</div>
+</footer>
+</main>
+<!-- Overlay for mobile sidebar -->
+<div class="fixed inset-0 bg-black/70 z-40 hidden backdrop-blur-md lg:hidden" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        
+        if (sidebar.classList.contains('-translate-x-full')) {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+        } else {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        }
+    }
+
+    const chatInput = document.getElementById('chat-input');
+    const chatCanvas = document.getElementById('chat-canvas');
+    const thinkingBubble = document.getElementById('thinking-bubble');
+
+    function handleSend() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        // Append User Message
+        const userMsg = `
+            <div class="flex flex-col items-end gap-sm animate-in slide-in-from-bottom duration-300">
+                <div class="max-w-[85%] bg-surface-container-highest p-5 rounded-2xl research-card-border shadow-sm">
+                    <p class="text-on-surface text-lg">${text}</p>
+                </div>
+                <span class="text-[10px] uppercase font-label-md text-outline">Just Now</span>
+            </div>
+        `;
+        // Injecting before the thinking bubble
+        const container = chatCanvas.querySelector('.max-w-4xl');
+        container.insertAdjacentHTML('beforeend', userMsg);
+        
+        chatInput.value = '';
+        chatInput.style.height = 'auto';
+        
+        // Scroll
+        chatCanvas.scrollTo({ top: chatCanvas.scrollHeight, behavior: 'smooth' });
+
+        // Show Thinking
+        thinkingBubble.classList.remove('hidden');
+        container.appendChild(thinkingBubble);
+
+        // Mock response
+        setTimeout(() => {
+            thinkingBubble.classList.add('hidden');
+            const aiMsg = `
+                <div class="flex flex-col items-start gap-4 animate-in slide-in-from-bottom duration-500">
+                    <div class="w-full max-w-full">
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="w-6 h-6 rounded-md bg-primary/20 flex items-center justify-center text-primary">
+                                <span class="material-symbols-outlined text-[16px]">terminal</span>
+                            </div>
+                            <span class="font-label-md text-sm text-on-surface font-semibold">Answer</span>
+                        </div>
+                        <div class="text-on-surface leading-relaxed text-lg mb-8">
+                            Based on your latest query regarding "${text}", I've analyzed <span class="text-primary font-semibold">Genomics_Report.pdf</span> and found relevant citations. The consensus suggests that the patterns you're looking for are highly localized to temperate zones.
+                        </div>
+                    </div>
+                    <span class="text-[10px] uppercase font-label-md text-outline">Processed in 0.9s</span>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', aiMsg);
+            chatCanvas.scrollTo({ top: chatCanvas.scrollHeight, behavior: 'smooth' });
+        }, 1500);
+    }
+
+    chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    });
+</script>
+</body></html>
