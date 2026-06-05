@@ -625,46 +625,46 @@ async function handleSend() {
     const thinkingId = appendThinking();
 
     let lastError = null;
-    for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-            const res  = await fetch(`${API}/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question, top_k: 5 }),
-                signal: AbortSignal.timeout(120000),
-            });
-            const json = await res.json();
+    try {
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                const res  = await fetch(`${API}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question, top_k: 5 }),
+                    signal: AbortSignal.timeout(120000),
+                });
+                const json = await res.json();
 
-            removeThinking(thinkingId);
+                removeThinking(thinkingId);
 
-            if (json.success) {
-                const answer = json.data.answer;
-                appendAIMessage(answer);
-                addMessage('assistant', answer);
-                break;
-            } else {
-                appendError(json.error?.message || 'Something went wrong.');
+                if (json.success) {
+                    const answer = json.data.answer;
+                    appendAIMessage(answer);
+                    addMessage('assistant', answer);
+                    break;
+                } else {
+                    appendError(json.error?.message || 'Something went wrong.');
+                    break;
+                }
+            } catch (err) {
+                lastError = err;
+                if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+                    await new Promise(r => setTimeout(r, 5000));
+                    continue;
+                }
                 break;
             }
-        } catch (err) {
-            lastError = err;
-            if (err.name === 'AbortError' || err.name === 'TimeoutError') {
-                // Backend may be cold-starting — wait and retry
-                await new Promise(r => setTimeout(r, 5000));
-                continue;
-            }
-            break;
         }
-    }
-    if (lastError) {
-        removeThinking(thinkingId);
-        appendError('Could not reach the backend. Make sure it is running.');
+        if (lastError) {
+            removeThinking(thinkingId);
+            appendError('Could not reach the backend. Make sure it is running.');
+        }
     } finally {
         isLoading = false;
         document.getElementById('send-btn').disabled = false;
         scrollToBottom();
     }
-}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    RENDER HELPERS
