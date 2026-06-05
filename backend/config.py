@@ -37,7 +37,15 @@ class BaseConfig:
     CORS_ORIGINS: list = [
         o.strip()
         for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+        if o.strip()
     ]
+    # Regex pattern for allowed origins (compiled in app.py).
+    # Default covers every *.onrender.com subdomain so the deployed frontend
+    # is always allowed without having to hard-code the exact URL here.
+    CORS_ORIGINS_REGEX: str = os.getenv(
+        "CORS_ORIGINS_REGEX",
+        r"https://.*\.onrender\.com",
+    )
 
     # ── Logging ─────────────────────────────────────────────────────────────
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

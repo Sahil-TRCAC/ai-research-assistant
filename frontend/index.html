@@ -531,7 +531,9 @@ async function uploadFile(file) {
     try {
         const res = await fetch(`${API}/documents/upload`, {
             method: 'POST', body: formData,
-            signal: _uploadAbort.signal,
+            // Combine user-cancel signal with a hard 120-second timeout.
+            // AbortSignal.any() fires whichever signal triggers first.
+            signal: AbortSignal.any([_uploadAbort.signal, AbortSignal.timeout(120000)]),
         });
         const json = await res.json();
 
@@ -563,8 +565,15 @@ async function uploadFile(file) {
         setTimeout(() => chip.classList.add('hidden'), 800);
 
     } catch (err) {
-        if (err.name !== 'AbortError') {
-            showToast('Upload failed — is the backend running?', 'error');
+        if (err.name === 'AbortError') {
+            // User clicked cancel — silently dismiss
+        } else if (err.name === 'TimeoutError') {
+            showToast('Upload timed out — the backend may be cold-starting. Try again.', 'warn');
+        } else if (err instanceof TypeError) {
+            // TypeError = network failure (CORS rejection, no connection, etc.)
+            showToast('Network error — CORS may be misconfigured or the backend is unreachable.', 'error');
+        } else {
+            showToast(`Upload failed: ${err.message}`, 'error');
         }
         chip.classList.add('hidden');
     }
@@ -580,7 +589,13 @@ function cancelUpload() {
 ───────────────────────────────────────────────────────────────────────────── */
 async function embedDocumentById(docId) {
     try {
-        const res  = await fetch(`${API}/documents/${docId}/embed`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({}) });
+        const res = await fetch(`${API}/documents/${docId}/embed`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+            // 3 minutes: generous for first-run model download (~80 MB) on Render.
+            signal: AbortSignal.timeout(180000),
+        });
         const json = await res.json();
         return json.success;
     } catch { return false; }
@@ -658,7 +673,12 @@ async function handleSend() {
         }
         if (lastError) {
             removeThinking(thinkingId);
-            appendError('Could not reach the backend. Make sure it is running.');
+            const errMsg = lastError instanceof TypeError
+                ? 'Network error — possible CORS misconfiguration or backend unreachable.'
+                : (lastError.name === 'TimeoutError'
+                    ? 'Request timed out — the backend may be cold-starting. Please try again.'
+                    : 'Could not reach the backend. Try again in a moment.');
+            appendError(errMsg);
         }
     } finally {
         isLoading = false;
