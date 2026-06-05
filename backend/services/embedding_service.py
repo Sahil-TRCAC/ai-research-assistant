@@ -240,7 +240,7 @@ def embed_document_chunks(
         texts = [c.chunk_text for c in batch]
 
         try:
-            vectors = list(model.encode(texts))
+            vectors = list(model.embed(texts))
 
             for chunk, vector in zip(batch, vectors):
                 chunk.embedding_vector = json.dumps(vector.tolist())
@@ -309,5 +309,5 @@ def embed_single_text(text: str) -> list[float]:
     Used later for query embedding at retrieval time.
     """
     model = _get_model()
-    vec = list(model.encode([text]))[0]
+    vec = list(model.embed([text]))[0]
     return vec.tolist()
