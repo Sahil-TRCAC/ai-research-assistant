@@ -477,20 +477,24 @@ function toggleSidebar() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   BACKEND HEALTH CHECK
+   BACKEND HEALTH CHECK (with retry)
 ───────────────────────────────────────────────────────────────────────────── */
-async function checkBackend() {
+async function checkBackend(retries = 3) {
     const el = document.getElementById('backend-status');
-    try {
-        const res = await fetch(`${API}/health`, { signal: AbortSignal.timeout(60000) });
-        if (res.ok) {
-            el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-green-400"></span><span>Backend connected</span>`;
-            el.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full border border-green-400/30 text-xs text-green-400';
-        } else throw new Error();
-    } catch {
-        el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-400"></span><span>Backend offline</span>`;
-        el.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full border border-red-400/30 text-xs text-red-400';
+    for (let i = 0; i < retries; i++) {
+        try {
+            const res = await fetch(`${API}/health`, { signal: AbortSignal.timeout(30000) });
+            if (res.ok) {
+                el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-green-400"></span><span>Backend connected</span>`;
+                el.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full border border-green-400/30 text-xs text-green-400';
+                return;
+            }
+        } catch {}
+        // Wait 5s before retry (gives Render time to cold-start)
+        await new Promise(r => setTimeout(r, 5000));
     }
+    el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span><span>Backend waking... try sending a message</span>`;
+    el.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full border border-yellow-400/30 text-xs text-yellow-400';
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -779,6 +783,8 @@ chatInput.addEventListener('keydown', (e) => {
         renderMessages(getActiveConv());
     }
     checkBackend();
+    // Recheck backend status every 30s (catches Render cold-start wakeup)
+    setInterval(() => checkBackend(1), 30000);
 })();
 </script>
 </body></html>
