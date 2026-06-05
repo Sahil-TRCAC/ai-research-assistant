@@ -90,7 +90,8 @@ from models.document_chunk import DocumentChunk
 
 logger = logging.getLogger("ai_research.embedding_service")
 
-MODEL_NAME = "all-MiniLM-L6-v2"
+MODEL_NAME = "BAAI/bge-small-en-v1.5"
+MODEL_DIMS = 384
 DEFAULT_BATCH_SIZE = 32
 
 # ── Singleton model loader ────────────────────────────────────────────────────
@@ -99,31 +100,27 @@ _model = None
 
 def _get_model():
     """
-    Load the sentence-transformer model once per process and cache it.
-    Thread-safe enough for development; use a lock in high-concurrency prod.
+    Load the embedding model once per process and cache it.
+    Uses fastembed (ONNX runtime) — much lighter than PyTorch.
     """
     global _model
     if _model is None:
         logger.info("Loading embedding model: %s (first-time download may take ~1 min)", MODEL_NAME)
         t0 = time.time()
         try:
-            from sentence_transformers import SentenceTransformer
-            _model = SentenceTransformer(MODEL_NAME)
-            logger.info("Model loaded in %.1fs  dims=%d", time.time() - t0, _get_dims())
+            from fastembed import TextEmbedding
+            _model = TextEmbedding(model_name=MODEL_NAME, cache_dir=".model_cache")
+            logger.info("Model loaded in %.1fs  dims=%d", time.time() - t0, MODEL_DIMS)
         except ImportError:
             raise RuntimeError(
-                "sentence-transformers is not installed. "
-                "Run: pip install sentence-transformers==3.0.1"
+                "fastembed is not installed. "
+                "Run: pip install fastembed"
             )
     return _model
 
 
 def _get_dims() -> int:
-    """Return the embedding dimension for the loaded model."""
-    try:
-        return _model.get_sentence_embedding_dimension()
-    except Exception:
-        return 384   # all-MiniLM-L6-v2 default
+    return MODEL_DIMS
 
 
 # ── Result container ──────────────────────────────────────────────────────────
@@ -243,13 +240,7 @@ def embed_document_chunks(
         texts = [c.chunk_text for c in batch]
 
         try:
-            vectors = model.encode(
-                texts,
-                batch_size=batch_size,
-                show_progress_bar=False,
-                convert_to_numpy=True,
-                normalize_embeddings=True,   # unit vectors → cosine sim = dot product
-            )
+            vectors = list(model.encode(texts))
 
             for chunk, vector in zip(batch, vectors):
                 chunk.embedding_vector = json.dumps(vector.tolist())
@@ -257,14 +248,14 @@ def embed_document_chunks(
                 chunk.is_embedded      = True
                 result.embedded       += 1
 
-            db.session.flush()   # write batch without committing yet
+            db.session.flush()
 
             logger.debug(
                 "Batch [%d:%d] embedded OK",
                 batch_start, batch_start + len(batch),
             )
 
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("Batch [%d:%d] failed: %s", batch_start, batch_start + len(batch), exc)
             for chunk in batch:
                 result.errors.append((chunk.id, str(exc)))
@@ -317,12 +308,6 @@ def embed_single_text(text: str) -> list[float]:
     Embed a single string and return its vector as a Python list.
     Used later for query embedding at retrieval time.
     """
-    import numpy as np
     model = _get_model()
-    vec = model.encode(
-        [text],
-        show_progress_bar=False,
-        convert_to_numpy=True,
-        normalize_embeddings=True,
-    )
-    return vec[0].tolist()
+    vec = list(model.encode([text]))[0]
+    return vec.tolist()
