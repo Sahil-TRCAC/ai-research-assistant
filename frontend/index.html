@@ -624,31 +624,41 @@ async function handleSend() {
     // Show thinking indicator
     const thinkingId = appendThinking();
 
-    try {
-        const res  = await fetch(`${API}/chat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question, top_k: 5 }),
-            signal: AbortSignal.timeout(120000),
-        });
-        const json = await res.json();
+    let lastError = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            const res  = await fetch(`${API}/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question, top_k: 5 }),
+                signal: AbortSignal.timeout(120000),
+            });
+            const json = await res.json();
 
-        removeThinking(thinkingId);
+            removeThinking(thinkingId);
 
-        if (json.success) {
-            const answer = json.data.answer;
-            appendAIMessage(answer);
-            addMessage('assistant', answer);
-        } else {
-            appendError(json.error?.message || 'Something went wrong.');
+            if (json.success) {
+                const answer = json.data.answer;
+                appendAIMessage(answer);
+                addMessage('assistant', answer);
+                break;
+            } else {
+                appendError(json.error?.message || 'Something went wrong.');
+                break;
+            }
+        } catch (err) {
+            lastError = err;
+            if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+                // Backend may be cold-starting — wait and retry
+                await new Promise(r => setTimeout(r, 5000));
+                continue;
+            }
+            break;
         }
-    } catch (err) {
+    }
+    if (lastError) {
         removeThinking(thinkingId);
-        if (err.name === 'TimeoutError') {
-            appendError('Backend is waking up (takes ~30s). Please try again in a moment.');
-        } else {
-            appendError('Could not reach the backend. Make sure it is running.');
-        }
+        appendError('Could not reach the backend. Make sure it is running.');
     } finally {
         isLoading = false;
         document.getElementById('send-btn').disabled = false;
