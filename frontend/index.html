@@ -482,7 +482,7 @@ function toggleSidebar() {
 async function checkBackend() {
     const el = document.getElementById('backend-status');
     try {
-        const res = await fetch(`${API}/health`, { signal: AbortSignal.timeout(3000) });
+        const res = await fetch(`${API}/health`, { signal: AbortSignal.timeout(60000) });
         if (res.ok) {
             el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-green-400"></span><span>Backend connected</span>`;
             el.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full border border-green-400/30 text-xs text-green-400';
@@ -625,6 +625,7 @@ async function handleSend() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ question, top_k: 5 }),
+            signal: AbortSignal.timeout(120000),
         });
         const json = await res.json();
 
@@ -639,7 +640,11 @@ async function handleSend() {
         }
     } catch (err) {
         removeThinking(thinkingId);
-        appendError('Could not reach the backend. Make sure `python app.py` is running.');
+        if (err.name === 'TimeoutError') {
+            appendError('Backend is waking up (takes ~30s). Please try again in a moment.');
+        } else {
+            appendError('Could not reach the backend. Make sure it is running.');
+        }
     } finally {
         isLoading = false;
         document.getElementById('send-btn').disabled = false;
