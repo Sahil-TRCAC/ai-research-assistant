@@ -14,7 +14,6 @@ Copy .env.example → .env and fill in your values before running.
 """
 
 import os
-import re
 import logging
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -50,30 +49,21 @@ def create_app() -> Flask:
 
     # ── CORS ──────────────────────────────────────────────────────────────────
     is_prod = os.getenv("FLASK_ENV", "development").lower() == "production"
-
-    # Explicit origin list from env var
     origins: list = list(app.config["CORS_ORIGINS"])
 
-    # In development allow the "null" origin so you can open index.html
-    # directly from disk (file:// → browser sends Origin: null).
-    # Never allow it in production.
+    # Allow "null" origin in dev so you can open index.html from disk.
+    # Never in production.
     if not is_prod:
         origins.append("null")
 
-    # Compile the regex pattern (default: any *.onrender.com subdomain).
-    # This means the deployed frontend is always allowed without needing
-    # its exact URL hard-coded anywhere in the codebase.
-    regex_str = app.config.get("CORS_ORIGINS_REGEX", "")
-    compiled_origins: list = origins + ([re.compile(regex_str)] if regex_str else [])
-
     CORS(
         app,
-        resources={r"/api/*": {"origins": compiled_origins}},
+        resources={r"/api/*": {"origins": origins}},
         supports_credentials=False,  # frontend sends no cookies / auth headers
         allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     )
-    logger.info("CORS enabled — explicit: %s  regex: %s", origins, regex_str)
+    logger.info("CORS enabled for origins: %s", origins)
 
     # ── Database ──────────────────────────────────────────────────────────────
     _init_db(app)
