@@ -6,6 +6,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script id="tailwind-config">
     tailwind.config = {
         darkMode: "class",
@@ -148,6 +149,142 @@
     @keyframes typingBounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-6px); opacity: 1; } }
     /* Progress bar */
     .progress-bar { height: 3px; border-radius: 2px; background: #adc6ff; transition: width 0.3s ease; }
+
+    /* ── Perplexity-style Answer Prose ───────────────────────────────────── */
+    .perplexity-answer {
+        color: #dae2fd;
+        line-height: 1.75;
+        font-size: 0.9375rem;
+    }
+    .perplexity-answer h2 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #f0f4ff;
+        margin: 1.25rem 0 0.5rem;
+        letter-spacing: -0.01em;
+    }
+    .perplexity-answer h3 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #c2c6d6;
+        margin: 1rem 0 0.4rem;
+    }
+    .perplexity-answer p {
+        margin: 0 0 0.85rem;
+    }
+    .perplexity-answer ul, .perplexity-answer ol {
+        margin: 0.5rem 0 0.85rem 1.25rem;
+    }
+    .perplexity-answer li {
+        margin-bottom: 0.3rem;
+    }
+    .perplexity-answer strong {
+        color: #f0f4ff;
+        font-weight: 600;
+    }
+    .perplexity-answer em {
+        color: #adc6ff;
+    }
+    .perplexity-answer code {
+        background: rgba(173,198,255,0.1);
+        border: 1px solid rgba(173,198,255,0.15);
+        border-radius: 4px;
+        padding: 1px 5px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.82em;
+        color: #89ceff;
+    }
+    /* Inline citation chip */
+    .cite-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.1rem;
+        height: 1.1rem;
+        padding: 0 0.28rem;
+        font-size: 0.62rem;
+        font-weight: 700;
+        font-family: 'Inter', sans-serif;
+        background: rgba(173,198,255,0.12);
+        color: #adc6ff;
+        border: 1px solid rgba(173,198,255,0.25);
+        border-radius: 4px;
+        cursor: pointer;
+        vertical-align: super;
+        line-height: 1;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+        text-decoration: none;
+        position: relative;
+        top: -0.1em;
+        margin: 0 1px;
+    }
+    .cite-chip:hover {
+        background: rgba(173,198,255,0.28);
+        color: #d8e8ff;
+        border-color: #adc6ff;
+    }
+    .cite-chip.active {
+        background: #adc6ff;
+        color: #002e6a;
+        border-color: #adc6ff;
+    }
+    /* Source card */
+    .source-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.65rem 0.85rem;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.025);
+        transition: background 0.15s, border-color 0.15s, transform 0.15s;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .source-card:hover {
+        background: rgba(173,198,255,0.07);
+        border-color: rgba(173,198,255,0.25);
+        transform: translateY(-1px);
+    }
+    .source-card.highlight {
+        background: rgba(173,198,255,0.12);
+        border-color: rgba(173,198,255,0.4);
+        box-shadow: 0 0 0 1px rgba(173,198,255,0.2);
+    }
+    .source-num {
+        flex-shrink: 0;
+        width: 1.3rem;
+        height: 1.3rem;
+        border-radius: 4px;
+        background: rgba(173,198,255,0.12);
+        border: 1px solid rgba(173,198,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+        font-weight: 700;
+        color: #adc6ff;
+        margin-top: 1px;
+    }
+    .source-favicon {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        object-fit: contain;
+        flex-shrink: 0;
+        margin-top: 3px;
+    }
+    .source-favicon-placeholder {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        flex-shrink: 0;
+        margin-top: 3px;
+        background: rgba(173,198,255,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 </style>
 </head>
 <body class="font-body-md text-body-md selection:bg-primary-container selection:text-on-primary-container">
@@ -211,8 +348,8 @@
                 <span class="material-symbols-outlined">menu</span>
             </button>
             <div class="flex flex-col">
-                <h1 class="text-sm font-semibold text-on-surface">AI Research Assistant</h1>
-                <p class="text-[10px] text-on-surface-variant uppercase font-label-md" id="header-subtitle">Powered by Groq • llama-3.3-70b-versatile</p>
+                <h1 class="text-sm font-semibold text-on-surface">Live Web Research Assistant</h1>
+                <p class="text-[10px] text-on-surface-variant uppercase font-label-md" id="header-subtitle">Search the web, summarize findings, and cite sources.</p>
             </div>
         </div>
         <div class="flex items-center gap-md">
@@ -233,7 +370,7 @@
                     <span class="material-symbols-outlined text-primary text-headline-md -rotate-3">auto_awesome</span>
                 </div>
                 <h2 class="font-headline-lg-mobile lg:font-headline-lg text-on-surface mb-sm">What do you want to know?</h2>
-                <p class="text-on-surface-variant max-w-lg text-sm" id="welcome-sub">Attach a PDF using the <span class="material-symbols-outlined text-[14px] align-text-bottom">attach_file</span> button below, then ask questions about it.</p>
+                <p class="text-on-surface-variant max-w-lg text-sm" id="welcome-sub">Enter a research query below to fetch live web sources and generate a structured summary.</p>
             </div>
         </div>
     </section>
@@ -255,14 +392,14 @@
                     </button>
                 </div>
                 <div class="flex items-end gap-2 p-2">
-                    <button class="p-3 hover:bg-surface-variant rounded-xl text-on-surface-variant transition-colors flex items-center justify-center" onclick="document.getElementById('file-input').click()" title="Attach PDF">
+                    <button hidden class="p-3 hover:bg-surface-variant rounded-xl text-on-surface-variant transition-colors flex items-center justify-center" onclick="document.getElementById('file-input').click()" title="Attach PDF">
                         <span class="material-symbols-outlined">attach_file</span>
                     </button>
                     <div class="flex-grow">
                         <textarea class="w-full bg-transparent border-none focus:ring-0 text-on-surface font-body-md py-3 px-2 resize-none custom-scrollbar max-h-48 min-h-[44px]"
                             id="chat-input"
                             oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"
-                            placeholder="Ask a question about your documents…"
+                            placeholder="Enter a live research question…"
                             rows="1"></textarea>
                     </div>
                     <button class="p-3 bg-primary text-on-primary rounded-xl hover:brightness-110 active:scale-95 transition-all shadow-lg flex items-center justify-center" id="send-btn" onclick="handleSend()">
@@ -300,7 +437,9 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    CONFIG
 ───────────────────────────────────────────────────────────────────────────── */
-const API = (window.AI_RESEARCH_API || 'https://ai-research-assistant-nxm5.onrender.com/api').replace(/\/+$/, '');
+const API = (window.AI_RESEARCH_API || (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://127.0.0.1:5000/api'
+    : 'https://ai-research-assistant-nxm5.onrender.com/api')).replace(/\/+$/, '');
 
 /* ─────────────────────────────────────────────────────────────────────────────
    STATE
@@ -308,6 +447,8 @@ const API = (window.AI_RESEARCH_API || 'https://ai-research-assistant-nxm5.onren
 let conversations = [];
 let activeConvId = null;
 let isLoading = false;
+let activeDocumentId = null;
+
 
 const STORAGE_KEY = 'ai_research_conversations';
 
@@ -337,8 +478,10 @@ function newChat() {
                 <span class="material-symbols-outlined text-primary text-headline-md -rotate-3">auto_awesome</span>
             </div>
             <h2 class="font-headline-lg-mobile lg:font-headline-lg text-on-surface mb-sm">What do you want to know?</h2>
-            <p class="text-on-surface-variant max-w-lg text-sm">Attach a PDF or start typing a question.</p>
+            <p class="text-on-surface-variant max-w-lg text-sm">Enter a live research query and get structured findings instantly.</p>
         </div>`;
+
+    activeDocumentId = null;
 
     const id = 'conv_' + Date.now();
     activeConvId = id;
@@ -379,7 +522,7 @@ function deleteConversation(id, e) {
                         <span class="material-symbols-outlined text-primary text-headline-md -rotate-3">auto_awesome</span>
                     </div>
                     <h2 class="font-headline-lg-mobile lg:font-headline-lg text-on-surface mb-sm">What do you want to know?</h2>
-                    <p class="text-on-surface-variant max-w-lg text-sm">Attach a PDF or start typing a question.</p>
+                    <p class="text-on-surface-variant max-w-lg text-sm">Enter a live research query and get structured findings instantly.</p>
                 </div>`;
         }
     }
@@ -550,6 +693,8 @@ async function uploadFile(file) {
         const ok = await embedDocumentById(doc.id);
         if (!ok) throw new Error('Embedding failed');
 
+        activeDocumentId = doc.id;
+
         barEl.style.width = '100%';
         statusEl.textContent = 'Ready';
 
@@ -643,10 +788,18 @@ async function handleSend() {
     try {
         for (let attempt = 0; attempt < 3; attempt++) {
             try {
-                const res  = await fetch(`${API}/chat`, {
+                let url = `${API}/research/query`;
+                let bodyPayload = { query: question, max_sources: 4 };
+
+                if (activeDocumentId) {
+                    url = `${API}/chat`;
+                    bodyPayload = { question: question, document_id: activeDocumentId, top_k: 5 };
+                }
+
+                const res  = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question, top_k: 5 }),
+                    body: JSON.stringify(bodyPayload),
                     signal: AbortSignal.timeout(120000),
                 });
                 const json = await res.json();
@@ -654,9 +807,9 @@ async function handleSend() {
                 removeThinking(thinkingId);
 
                 if (json.success) {
-                    const answer = json.data.answer;
-                    appendAIMessage(answer);
-                    addMessage('assistant', answer);
+                    const data = json.data;
+                    renderResearchResult(data);
+                    addMessage('assistant', data.answer || data.summary || 'Research completed.');
                     break;
                 } else {
                     appendError(json.error?.message || 'Something went wrong.');
@@ -741,6 +894,170 @@ function appendAIMessage(text) {
         </div>`;
     container.appendChild(el);
 }
+
+/* ── Perplexity-style renderer ────────────────────────────────────────────── */
+function renderCitations(html, sources) {
+    // Replace [N] or [N,M] patterns with clickable cite chips
+    return html.replace(/\[(\d+(?:,\s*\d+)*)\]/g, (match, nums) => {
+        return nums.split(',').map(n => {
+            const idx = parseInt(n.trim(), 10);
+            if (idx < 1 || idx > sources.length) return match;
+            return `<a class="cite-chip" onclick="highlightSource(${idx})" title="Source ${idx}">[${idx}]</a>`;
+        }).join('');
+    });
+}
+
+function highlightSource(n) {
+    // Remove all highlights
+    document.querySelectorAll('.source-card').forEach(el => el.classList.remove('highlight'));
+    document.querySelectorAll('.cite-chip').forEach(el => el.classList.remove('active'));
+    // Highlight target card
+    const card = document.getElementById(`source-card-${n}`);
+    if (card) {
+        card.classList.add('highlight');
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setTimeout(() => card.classList.remove('highlight'), 2200);
+    }
+    // Activate matching chips
+    document.querySelectorAll(`.cite-chip[onclick="highlightSource(${n})"]`).forEach(c => {
+        c.classList.add('active');
+        setTimeout(() => c.classList.remove('active'), 2200);
+    });
+}
+
+function getFaviconUrl(url) {
+    try {
+        const origin = new URL(url).origin;
+        return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(origin)}&sz=32`;
+    } catch { return null; }
+}
+
+function renderResearchResult(data) {
+    const sources = Array.isArray(data.sources) ? data.sources : [];
+    const answerMd = data.answer || '';
+
+    const section = document.createElement('div');
+    section.className = 'flex flex-col gap-4 py-2 animate-in slide-in-from-bottom duration-500 max-w-full';
+
+    // ── 1. Sources bar (compact horizontal, above answer like Perplexity) ─
+    if (sources.length > 0) {
+        const sourceBar = document.createElement('div');
+        sourceBar.className = 'flex items-center gap-2 flex-wrap';
+        sourceBar.innerHTML = `
+            <span class="text-[10px] uppercase tracking-[0.18em] text-on-surface-variant font-semibold flex items-center gap-1">
+                <span class="material-symbols-outlined text-[12px]">travel_explore</span>Sources
+            </span>
+            ${sources.map((s, i) => {
+                let label = "Unknown Source";
+                let urlAttr = "#";
+                let faviconHtml = `<span class="material-symbols-outlined text-[11px]">description</span>`;
+                let targetAttr = "";
+                
+                if (data.mode === 'document') {
+                    label = s.original_filename || s.document_title;
+                    urlAttr = "javascript:void(0)";
+                } else {
+                    const domain = (() => { try { return new URL(s.url).hostname.replace('www.',''); } catch { return s.url; } })();
+                    label = domain;
+                    urlAttr = escapeHtml(s.url);
+                    targetAttr = 'target="_blank" rel="noreferrer noopener"';
+                    const favicon = getFaviconUrl(s.url);
+                    if (favicon) faviconHtml = `<img src="${favicon}" class="source-favicon" onerror="this.style.display='none'" alt=""/>`;
+                    else faviconHtml = `<span class="material-symbols-outlined text-[11px]">link</span>`;
+                }
+
+                return `<a href="${urlAttr}" ${targetAttr}
+                    class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-outline-variant/30 bg-surface-container hover:bg-primary/10 hover:border-primary/40 transition-all text-xs text-on-surface-variant hover:text-primary group"
+                    onclick="event.stopPropagation()">
+                    ${faviconHtml}
+                    <span class="truncate max-w-[120px]">${escapeHtml(label)}</span>
+                    <span class="cite-chip" style="cursor:default;pointer-events:none;margin:0;">${i+1}</span>
+                </a>`;
+            }).join('')}
+        `;
+        section.appendChild(sourceBar);
+    }
+
+    // ── 2. Answer card ────────────────────────────────────────────────────
+    const answerCard = document.createElement('div');
+    answerCard.className = 'bg-surface-container rounded-2xl border border-outline-variant/20 shadow-sm p-5 overflow-hidden';
+
+    // Parse markdown → HTML, then inject citation chips
+    let answerHtml = '';
+    if (typeof marked !== 'undefined') {
+        marked.setOptions({ breaks: true, gfm: true });
+        answerHtml = marked.parse(answerMd);
+    } else {
+        answerHtml = `<p>${escapeHtml(answerMd).replace(/\n/g, '<br>')}</p>`;
+    }
+    answerHtml = renderCitations(answerHtml, sources);
+
+    answerCard.innerHTML = `<div class="perplexity-answer">${answerHtml}</div>`;
+    section.appendChild(answerCard);
+
+    // ── 3. Numbered source cards (full list) ──────────────────────────────
+    if (sources.length > 0) {
+        const sourcesSection = document.createElement('div');
+        sourcesSection.className = 'flex flex-col gap-1.5';
+        sourcesSection.innerHTML = `
+            <p class="text-[10px] uppercase tracking-[0.18em] text-on-surface-variant font-semibold mb-1 flex items-center gap-1">
+                <span class="material-symbols-outlined text-[12px]">format_list_numbered</span>References
+            </p>
+            ${sources.map((s, i) => {
+                const n = i + 1;
+                let title = "";
+                let subtitle = "";
+                let urlAttr = "#";
+                let targetAttr = "";
+                let iconHtml = `<span class="source-favicon-placeholder"><span class="material-symbols-outlined text-[10px] text-on-surface-variant">description</span></span>`;
+                
+                if (data.mode === 'document') {
+                    title = s.original_filename || s.document_title;
+                    subtitle = `Chunk ${s.chunk_index}`;
+                    urlAttr = "javascript:void(0)";
+                } else {
+                    const domain = (() => { try { return new URL(s.url).hostname.replace('www.',''); } catch { return s.url; } })();
+                    title = s.title || domain;
+                    subtitle = domain;
+                    urlAttr = escapeHtml(s.url);
+                    targetAttr = 'target="_blank" rel="noreferrer noopener"';
+                    const favicon = getFaviconUrl(s.url);
+                    if (favicon) {
+                        iconHtml = `<img src="${favicon}" class="source-favicon" onerror="this.style.display='none'" alt=""/>`;
+                    } else {
+                        iconHtml = `<span class="source-favicon-placeholder"><span class="material-symbols-outlined text-[10px] text-on-surface-variant">language</span></span>`;
+                    }
+                }
+
+                return `<a id="source-card-${n}" href="${urlAttr}" ${targetAttr}
+                    class="source-card">
+                    <span class="source-num">${n}</span>
+                    ${iconHtml}
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs text-on-surface font-medium truncate leading-snug">${escapeHtml(title)}</p>
+                        <p class="text-[10px] text-on-surface-variant truncate">${escapeHtml(subtitle)}</p>
+                    </div>
+                    <span class="material-symbols-outlined text-[12px] text-outline flex-shrink-0 self-center">open_in_new</span>
+                </a>`;
+            }).join('')}
+        `;
+        section.appendChild(sourcesSection);
+    }
+
+    // ── 4. Copy button ────────────────────────────────────────────────────
+    const copyRow = document.createElement('div');
+    copyRow.className = 'flex justify-end pb-1';
+    copyRow.innerHTML = `
+        <button class="flex items-center gap-1 px-3 py-1 rounded-lg text-xs text-on-surface-variant hover:bg-surface-variant transition-colors"
+            onclick="copyAnswer(this, \`${escapeForAttr(answerMd)}\`)">
+            <span class="material-symbols-outlined text-[14px]">content_copy</span>Copy
+        </button>`;
+    section.appendChild(copyRow);
+
+    container.appendChild(section);
+    scrollToBottom();
+}
+
 
 function appendFileMessage(filename) {
     const el = document.createElement('div');

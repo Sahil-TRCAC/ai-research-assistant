@@ -177,11 +177,27 @@ def chat():
         logger.exception("LLM call failed unexpectedly")
         return error_response("LLM call failed.", 500, "CHAT_FAILED", str(exc))
 
+    # Build source citations — deduplicated by document so same doc doesn't
+    # appear multiple times; each entry shows the doc title and snippet index.
+    seen_docs: set[str] = set()
+    sources: list[dict] = []
+    for chunk in chunks:
+        if chunk.document_id not in seen_docs:
+            seen_docs.add(chunk.document_id)
+            sources.append({
+                "document_id":       chunk.document_id,
+                "document_title":    chunk.document_title,
+                "original_filename": chunk.original_filename,
+                "chunk_index":       chunk.chunk_index,
+            })
+
     return success_response(
         data={
             "answer":       llm_result.answer,
+            "sources":      sources,
             "model":        llm_result.model,
             "duration_sec": llm_result.duration_sec,
+            "mode":         "document",   # tells frontend which renderer to use
         },
         message="Answer generated successfully.",
     )

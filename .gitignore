@@ -46,3 +46,4 @@ htmlcov/
 # ML model cache
 **/transformers/
 **/models--sentence-transformers/
+.model_cache/

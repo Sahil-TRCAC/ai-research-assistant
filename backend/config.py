@@ -42,6 +42,8 @@ class BaseConfig:
             # Override via CORS_ORIGINS env var (comma-separated) on Render.
             "http://localhost:3000,"
             "http://localhost:5173,"
+            "http://localhost:8000,"
+            "http://127.0.0.1:8000,"
             "https://ai-research-frontend-qyxc.onrender.com",
         ).split(",")
         if o.strip()

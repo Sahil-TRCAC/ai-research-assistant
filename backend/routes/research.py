@@ -14,7 +14,7 @@ POST   /api/research/sessions/<session_id>/messages   — add a message (placeho
 import logging
 from flask import Blueprint, request
 
-from services import session_service
+from services import research_engine, llm_service, session_service
 from utils.response import success_response, error_response
 from utils.validators import validate_uuid
 
@@ -55,6 +55,69 @@ def create_session():
     except Exception as exc:
         logger.exception("Failed to create session")
         return error_response("Internal server error.", 500, "SESSION_CREATE_FAILED", str(exc))
+
+
+# ── Live web research query ───────────────────────────────────────────────────
+
+@research_bp.route("/query", methods=["POST", "OPTIONS"])
+def live_research_query():
+    """
+    Perform live web research for a query, then summarize findings with Groq.
+
+    JSON body
+    ---------
+    { "query": "...", "max_sources": 4 }
+    """
+    if request.method == "OPTIONS":
+        return "", 204
+
+    body = request.get_json(silent=True) or {}
+    query = (body.get("query") or "").strip()
+    if not query:
+        return error_response("Field 'query' is required.", 400, "MISSING_QUERY")
+
+    try:
+        max_sources = int(body.get("max_sources", 4))
+    except (TypeError, ValueError):
+        return error_response("'max_sources' must be an integer.", 400, "INVALID_PARAMS")
+
+    if max_sources < 1 or max_sources > 8:
+        return error_response("'max_sources' must be between 1 and 8.", 400, "INVALID_PARAMS")
+
+    logger.info("Live research query: %r max_sources=%d", query[:120], max_sources)
+
+    try:
+        research_context = research_engine.perform_live_research(query, max_sources=max_sources)
+        llm_result = llm_service.summarize_web_research(
+            query=query,
+            context_text=research_context.combined_text,
+            sources=[{"title": source.title, "url": source.url} for source in research_context.sources],
+        )
+        return success_response(
+            data={
+                "query": llm_result.query,
+                "answer": llm_result.answer,
+                "sources": llm_result.sources,
+                "research_sources": [
+                    {
+                        "title": source.title,
+                        "url": source.url,
+                        "domain": source.domain,
+                        "relevance_score": round(source.relevance_score, 2),
+                        "snippets": source.snippets,
+                    }
+                    for source in research_context.sources
+                ],
+            },
+            message="Live research completed successfully.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), 400, "INVALID_QUERY")
+    except RuntimeError as exc:
+        return error_response(str(exc), 503, "RESEARCH_FAILED")
+    except Exception as exc:
+        logger.exception("Live research failed")
+        return error_response("Live research failed.", 500, "RESEARCH_FAILED", str(exc))
 
 
 # ── List sessions for a document ──────────────────────────────────────────────

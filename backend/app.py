@@ -49,12 +49,10 @@ def create_app() -> Flask:
 
     # ── CORS ──────────────────────────────────────────────────────────────────
     is_prod = os.getenv("FLASK_ENV", "development").lower() == "production"
-    origins: list = list(app.config["CORS_ORIGINS"])
-
-    # Allow "null" origin in dev so you can open index.html from disk.
-    # Never in production.
-    if not is_prod:
-        origins.append("null")
+    if is_prod:
+        origins = list(app.config["CORS_ORIGINS"])
+    else:
+        origins = "*"
 
     CORS(
         app,
