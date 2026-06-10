@@ -1,19 +1,22 @@
 <div align="center">
-  <h1>🧠 AI Research Assistant</h1>
-  <p><strong>Retrieval-Augmented Generation over your PDFs — powered by Groq LLMs</strong></p>
+  <div style="padding: 20px;">
+    <h1>🧠 AI Research Assistant</h1>
+    <p><strong>Your Ultimate Retrieval-Augmented Generation (RAG) & Live Web Research Engine powered by Groq LLMs</strong></p>
+  </div>
 
   <p>
-    <img src="https://img.shields.io/badge/Python-3.10+-blue?logo=python" alt="Python">
-    <img src="https://img.shields.io/badge/Flask-3.0-black?logo=flask" alt="Flask">
-    <img src="https://img.shields.io/badge/Groq-LLM-ff6600?logo=groq" alt="Groq">
-    <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql" alt="PostgreSQL">
-    <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
+    <img src="https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white" alt="Python">
+    <img src="https://img.shields.io/badge/Flask-3.0-black?logo=flask&logoColor=white" alt="Flask">
+    <img src="https://img.shields.io/badge/Groq-LLM-ff6600?logo=groq&logoColor=white" alt="Groq">
+    <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL">
+    <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white" alt="Tailwind CSS">
+    <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
   </p>
 
   <br>
 
   <p align="center">
-    <b>Upload a PDF → Ask questions → Get grounded answers with source citations</b>
+    <b>Upload your documents or query the web → Get instant, grounded answers with inline citations!</b>
   </p>
 
   <br>
@@ -25,59 +28,43 @@
 
 | Feature | Description |
 |---------|-------------|
-| 📄 **Smart PDF Ingestion** | Upload PDF/DOCX/TXT files — automatically extracted, chunked, and embedded |
-| 🔍 **Semantic Search** | Queries matched by meaning, not keywords (384-dim all-MiniLM-L6-v2 vectors) |
-| 🧠 **LLM-Powered Answers** | Grounded generation via Groq's `llama-3.3-70b-versatile` |
-| 🔗 **Source Citations** | Every answer traces back to specific chunks in your documents |
-| 💬 **Chat Interface** | Clean, dark-mode UI with conversation history (persisted in browser) |
-| ⚡ **10x Faster LLM** | Groq LPU inference — answers in <500ms |
-| 🔐 **Privacy-First** | Your data stays in your PostgreSQL database. No third-party storage. |
+| 📄 **Smart Document Ingestion** | Upload PDF, DOCX, TXT, CSV, and MD files. Automatically extracted, intelligently chunked, and embedded. |
+| 🌐 **Live Web Research** | Ask any question and the AI will search the web (DuckDuckGo), scrape the top live pages, and synthesize the latest findings. |
+| 🔍 **Deep Semantic Search** | Local embeddings using `sentence-transformers` (`all-MiniLM-L6-v2`) match your queries by meaning, not just keywords. |
+| 🧠 **Lightning Fast LLMs** | Grounded generation via Groq's `llama-3.3-70b-versatile`. Powered by Groq LPUs for <500ms inference. |
+| 🔗 **Precision Source Citations** | Every claim traces back to specific document chunks or URLs with clickable Perplexity-style citation pills `[1]`. |
+| 💬 **Premium UI/UX** | Stunning glassmorphism dark-mode UI built with Vanilla JS and TailwindCSS, including local conversation history. |
+| 🔐 **Privacy-First** | All documents stay entirely within your local PostgreSQL database. No external vector storage providers required. |
 
 ---
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────────────────┐
-│                   Frontend (HTML/JS)                 │
-│              Dark-mode chat + sidebar                │
-└──────────────────┬──────────────────────────────────┘
-                   │ HTTP (fetch API)
-                   ▼
-┌─────────────────────────────────────────────────────┐
-│              Flask Backend (Python)                   │
-│                                                      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │  Routes   │  │ Services  │  │      Models       │  │
-│  │ (API)     │──│(Business) │──│   (SQLAlchemy)    │  │
-│  └──────────┘  └──────────┘  └──────────────────┘  │
-│       │               │               │              │
-│       ▼               ▼               ▼              │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │  Groq    │  │Sentence- │  │   PostgreSQL      │  │
-│  │  LLM API │  │Transformers│  │   (pgvector)     │  │
-│  └──────────┘  └──────────┘  └──────────────────┘  │
-└─────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    UI[Frontend UI <br> Vanilla JS + Tailwind] -->|Fetch API| API(Flask Backend)
+    
+    subgraph "Backend System"
+        API -->|Upload| DOCS[Document Service]
+        API -->|Search Web| WEB[Research Engine <br> DuckDuckGo + Scraper]
+        
+        DOCS -->|Text| CHUNK[Chunking Service]
+        CHUNK -->|Chunks| EMBED[Embedding Service <br> Local all-MiniLM]
+        EMBED -->|Vectors| DB[(PostgreSQL + pgvector)]
+        
+        API -->|RAG Query| RETRIEVE[Retrieval Service]
+        RETRIEVE <--> DB
+    end
+    
+    RETRIEVE -->|Context| LLM[Groq LLM Service]
+    WEB -->|Live Context| LLM
+    LLM -->|Grounded Answer| UI
 ```
 
-### The RAG Pipeline
+### The Dual-Mode Pipeline
 
-```
-Upload PDF  ──→  Extract Text  ──→  Chunk (500 chars, 100 overlap)
-                                            │
-                                            ▼
-                                     Embed (384-dim vector)
-                                            │
-              ┌──────────────────────────────┘
-              ▼
-User Question  ──→  Embed Query  ──→  Cosine Similarity  ──→  Top-5 Chunks
-                                                                   │
-                                                                   ▼
-                                                            Groq LLM
-                                                                   │
-                                                                   ▼
-                                                          Grounded Answer
-```
+1. **Document RAG Mode:** Upload a file ──→ Extract & Embed ──→ Semantic Search ──→ LLM Synthesis with Chunk Citations.
+2. **Web Research Mode:** Ask a question ──→ Web Search ──→ Scrape Pages ──→ Extract Content ──→ LLM Synthesis with URL Citations.
 
 ---
 
@@ -85,11 +72,11 @@ User Question  ──→  Embed Query  ──→  Cosine Similarity  ──→  
 
 ### Prerequisites
 
-| Requirement | Version |
-|-------------|---------|
-| Python | 3.10+ |
-| PostgreSQL | 14+ |
-| Groq API Key | [Get free key](https://console.groq.com) |
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| Python | 3.10+ | |
+| PostgreSQL | 14+ | Requires `pgvector` extension |
+| Groq API Key | - | [Get a free key here](https://console.groq.com) |
 
 ### 1. Clone & Setup
 
@@ -97,200 +84,111 @@ User Question  ──→  Embed Query  ──→  Cosine Similarity  ──→  
 git clone https://github.com/Sahil-TRCAC/ai-research-assistant.git
 cd ai-research-assistant
 
-# Backend
+# Setup Backend Virtual Environment
 cd backend
 python -m venv venv
+
+# Activate venv
 # Windows:
 venv\Scripts\activate
 # macOS/Linux:
 # source venv/bin/activate
 
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Database
+### 2. Database Initialization
 
 ```bash
-# Create the PostgreSQL database
+# Create the PostgreSQL database (if you have PostgreSQL CLI installed)
 createdb ai_research_db
 
-# Or via psql:
-psql -U postgres -c "CREATE DATABASE ai_research_db;"
+# Or manually via psql:
+# psql -U postgres -c "CREATE DATABASE ai_research_db;"
 ```
 
-### 3. Configure
+### 3. Environment Variables
 
 ```bash
 cp .env.example .env
-# Edit .env with your credentials:
-#   - DATABASE_URL=postgresql://user:password@localhost:5432/ai_research_db
-#   - GROQ_API_KEY=gsk_your_key_here
+```
+Edit the `.env` file to include your database URL and API key:
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/ai_research_db
+GROQ_API_KEY=gsk_your_groq_api_key_here
 ```
 
-### 4. Run
+### 4. Run the Server
 
 ```bash
 python app.py
 ```
+*Note: On the first run, the local embedding model (~80 MB) will be downloaded automatically.*
 
-The server starts at **http://localhost:5000**
+The server will start at **http://localhost:5000**
 
 ### 5. Open the Frontend
 
-Open `frontend/index.html` in your browser — it connects to the backend automatically.
+Simply double-click `frontend/index.html` to open it in your browser. It automatically connects to `http://localhost:5000/api`.
 
 ---
 
-## 🧪 Testing
+## 📡 Core API Reference
 
-```bash
-cd backend
-python -m pytest test_smoke.py -v
-python -m pytest test_pdf_extraction.py -v
-python -m pytest test_chunking.py -v
-python -m pytest test_embeddings.py -v
-```
-
----
-
-## 📡 API Reference
-
-### Health
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Liveness check |
-| GET | `/api/health/db` | Database connectivity |
-| GET | `/api/health/detailed` | Full system status |
-
-### Documents
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/documents/upload` | Upload file (multipart) |
-| GET | `/api/documents` | List documents (paginated) |
-| GET | `/api/documents/<id>` | Get document metadata |
-| PATCH | `/api/documents/<id>` | Update document |
-| DELETE | `/api/documents/<id>` | Delete document |
-| POST | `/api/documents/<id>/rechunk` | Re-chunk with custom params |
-| POST | `/api/documents/<id>/embed` | Generate embeddings |
-
-### Chat
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/chat` | Full RAG: question → answer |
-| POST | `/api/retrieval/search` | Semantic search (no LLM) |
-
-### Sessions
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/research/sessions` | Create session |
-| GET | `/api/research/sessions/<doc_id>` | List sessions |
-| GET | `/api/research/sessions/<id>/detail` | Session with messages |
+| Mode | Method | Endpoint | Description |
+|------|--------|----------|-------------|
+| **Setup** | POST | `/api/documents/upload` | Upload and extract text from a document |
+| **Setup** | POST | `/api/documents/<id>/embed` | Generate vectors for the document chunks |
+| **RAG** | POST | `/api/chat` | Ask a question against an uploaded document |
+| **Web** | POST | `/api/research/query` | Live web research query |
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Backend
-
-| Category | Technology |
-|----------|-----------|
-| Framework | Flask 3.0 + Flask-CORS |
-| Database | PostgreSQL 16 + SQLAlchemy 2.0 |
-| Embeddings | sentence-transformers (all-MiniLM-L6-v2) |
-| LLM | Groq API (llama-3.3-70b-versatile) |
-| PDF | pypdf, python-docx |
-| Server | Gunicorn (production) |
+- **Framework:** Flask 3.0 + Flask-CORS
+- **Database:** PostgreSQL 16 + SQLAlchemy 2.0 (`pgvector`)
+- **Embeddings:** `sentence-transformers` (`all-MiniLM-L6-v2`)
+- **LLM:** Groq API (`llama-3.3-70b-versatile`)
+- **Web Scraping:** BeautifulSoup4, DuckDuckGo-Search
+- **File Parsing:** `pypdf`, `python-docx`
 
 ### Frontend
-
-| Category | Technology |
-|----------|-----------|
-| UI | Tailwind CSS (CDN) |
-| Icons | Material Symbols |
-| Fonts | Inter, JetBrains Mono |
-| State | localStorage |
+- **UI Toolkit:** Tailwind CSS (CDN)
+- **Icons & Fonts:** Material Symbols, Inter, JetBrains Mono
+- **Markdown:** `marked.js`
+- **State Management:** `localStorage`
 
 ---
 
-## 📁 Project Structure
+## 🚀 Deployment Guides
 
-```
-ai-research-assistant/
-├── backend/
-│   ├── app.py                    # Application factory & entry point
-│   ├── config.py                 # Environment configuration
-│   ├── models/                   # SQLAlchemy ORM models
-│   │   ├── document.py           # Document model
-│   │   ├── document_chunk.py     # Chunk model (text + vector)
-│   │   └── research_session.py   # Session model
-│   ├── routes/                   # Flask blueprints (API endpoints)
-│   │   ├── health.py             # Health checks
-│   │   ├── documents.py          # Document CRUD + chunk/embed
-│   │   ├── research.py           # Session management
-│   │   ├── retrieval.py          # Semantic search
-│   │   └── chat.py               # RAG pipeline endpoint
-│   ├── services/                 # Business logic
-│   │   ├── pdf_extractor.py      # PDF text extraction
-│   │   ├── chunking_service.py   # Text splitting
-│   │   ├── embedding_service.py  # Vector embedding
-│   │   ├── retrieval_service.py  # Similarity search
-│   │   └── llm_service.py        # Groq integration
-│   └── utils/                    # Utilities & helpers
-├── frontend/
-│   └── index.html                # Single-page chat UI
-└── README.md
-```
+### Deploying the Backend (Render)
+1. Create a **Web Service** on [Render](https://render.com) and link your GitHub repository.
+2. Build Command: `pip install -r requirements.txt`
+3. Start Command: `gunicorn "app:create_app()" --workers 4 --bind 0.0.0.0:$PORT --timeout 120`
+4. Inject your `.env` variables in the Render Dashboard.
+5. Make sure you attach a Render PostgreSQL database to the service.
 
----
-
-## 🚀 Deployment
-
-### Backend on Render
-
-1. Push to GitHub
-2. Create a **Web Service** on [Render](https://render.com)
-3. Connect your repo
-4. Set:
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn "app:create_app()" --workers 4 --bind 0.0.0.0:$PORT --timeout 120`
-5. Add environment variables from `.env.example`
-6. Deploy
-
-### Frontend on Vercel
-
-1. Push to GitHub
-2. Import project on [Vercel](https://vercel.com)
-3. Set:
-   - **Root Directory**: `frontend`
-   - **Build Command**: None (static)
-   - **Output**: `index.html`
-4. Set `AI_RESEARCH_API` env var to your Render backend URL
-5. Deploy
-
----
-
-## ⚠️ Security Notes
-
-- **Never commit `.env`** — it contains API keys and database credentials
-- The `.env` file is in `.gitignore` and will not be pushed
-- Rotate your Groq API key if it has been exposed
-- Use strong passwords for your PostgreSQL database
-- In production, use environment variables (not `.env` files)
+### Deploying the Frontend (Vercel)
+1. Import the project into [Vercel](https://vercel.com).
+2. Set the **Root Directory** to `frontend`.
+3. Clear the Build Command (leave empty).
+4. Output Directory: Leave default or `.`
+5. Inject the environment variable `AI_RESEARCH_API` pointing to your deployed backend URL (e.g. `https://your-backend.onrender.com/api`).
 
 ---
 
 ## 📄 License
 
-MIT © Sahil-TRCAC
+Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
 <div align="center">
-  <p>Built with Flask, Groq, sentence-transformers, and ❤️</p>
+  <p>Built for speed, accuracy, and beautiful user experiences. 🚀</p>
   <p>
     <a href="https://github.com/Sahil-TRCAC/ai-research-assistant/issues">Report Bug</a>
     ·
